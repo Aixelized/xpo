@@ -1,9 +1,23 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, View, Pressable, FlatList, Image, Alert } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  FlatList,
+  Image,
+  Alert,
+  Modal,
+  Dimensions,
+} from 'react-native';
 import { Link, useFocusEffect } from 'expo-router';
 import { getSavedPhotos, deletePhoto, SavedPhoto } from './photostorage';
+
+const screenWidth = Dimensions.get('window').width;
+
 export default function GalleryScreen() {
   const [photos, setPhotos] = useState<SavedPhoto[]>([]);
+  const [selected, setSelected] = useState<SavedPhoto | null>(null);
 
   const loadPhotos = useCallback(async () => {
     setPhotos(await getSavedPhotos());
@@ -23,6 +37,7 @@ export default function GalleryScreen() {
         style: 'destructive',
         onPress: async () => {
           await deletePhoto(id);
+          setSelected(null);
           loadPhotos();
         },
       },
@@ -41,7 +56,13 @@ export default function GalleryScreen() {
         ListEmptyComponent={<Text style={styles.text}>No photos saved yet.</Text>}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Image source={{ uri: item.uri }} style={styles.thumbnail} />
+            <Pressable onPress={() => setSelected(item)}>
+              <Image
+                source={{ uri: item.uri }}
+                style={styles.thumbnail}
+                resizeMode="cover"
+              />
+            </Pressable>
             <Pressable style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
               <Text style={styles.buttonText}>Delete</Text>
             </Pressable>
@@ -52,9 +73,31 @@ export default function GalleryScreen() {
       <Link href="/camera" style={[styles.button, styles.buttonText]}>
         Back to Camera
       </Link>
+
+      <Modal
+        visible={selected !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelected(null)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setSelected(null)}>
+          {selected && (
+            <Image
+              source={{ uri: selected.uri }}
+              style={styles.fullImage}
+              resizeMode="contain"
+            />
+          )}
+          <Pressable style={styles.closeButton} onPress={() => setSelected(null)}>
+            <Text style={styles.buttonText}>Close</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
+
+const CARD_SIZE = (screenWidth - 48) / 2;
 
 const styles = StyleSheet.create({
   container: {
@@ -71,7 +114,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   card: {
-    flex: 1,
+    width: CARD_SIZE,
     margin: 6,
     borderRadius: 8,
     overflow: 'hidden',
@@ -80,8 +123,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   thumbnail: {
-    width: 140,
-    height: 140,
+    width: CARD_SIZE - 12,
+    height: CARD_SIZE - 12,
     borderRadius: 8,
     backgroundColor: '#333',
   },
@@ -102,5 +145,22 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#25292e',
     fontWeight: 'bold',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: '90%',
+    height: '75%',
+  },
+  closeButton: {
+    marginTop: 24,
+    backgroundColor: '#ffd33d',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
   },
 });
