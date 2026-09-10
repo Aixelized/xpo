@@ -1,143 +1,146 @@
-import { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  Alert,
-  FlatList,
-  SafeAreaView,
-} from 'react-native';
+import React, { useRef, useState } from 'react';
+import { StyleSheet, Text, View, Pressable, Alert } from 'react-native';
+import { Link } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-
-
-const PHOTO_DIR = FileSystem.documentDirectory + 'photos/';
-
-async function ensureDirExists() {
-  const dirInfo = await FileSystem.getInfoAsync(PHOTO_DIR);
-  if (!dirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(PHOTO_DIR, { intermediates: true });
-  }
-}
+import { savePhoto } from './photostorage';
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-  const [showCamera, setShowCamera] = useState(false);
-  const [facing, setFacing] = useState('back');
-  const [photos, setPhotos] = useState([]);
-  const cameraRef = useRef(null);
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [isSaving, setIsSaving] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
 
-  useEffect(() => {
-    loadSavedPhotos();
-  }, []);
-
-  const loadSavedPhotos = async () => {
-    await ensureDirExists();
-    const files = await FileSystem.readDirectoryAsync(PHOTO_DIR);
-    const uris = files
-      .sort()
-      .reverse()
-      .map((filename) => PHOTO_DIR + filename);
-    setPhotos(uris);
-  };
-
-  const saveToLocalStorage = async (tempUri) => {
-    await ensureDirExists();
-    const filename = `photo_${Date.now()}.jpg`;
-    const newPath = PHOTO_DIR + filename;
-    await FileSystem.copyAsync({ from: tempUri, to: newPath });
-    setPhotos((prev) => [newPath, ...prev]);
-  };
-
-  const deletePhoto = async (uri) => {
-    await FileSystem.deleteAsync(uri, { idempotent: true });
-    setPhotos((prev) => prev.filter((p) => p !== uri));
-  };
-
-  const confirmDelete = (uri) => {
-    Alert.alert('Delete photo?', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deletePhoto(uri) },
-    ]);
-  };
-
-  const openCamera = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
-        Alert.alert('Permission needed', 'Camera access is required.');
-        return;
-      }
-    }
-    setShowCamera(true);
-  };
-
-  const takePicture = async () => {
-    if (!cameraRef.current) return;
-    const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
-    setShowCamera(false);
-    await saveToLocalStorage(photo.uri);
-  };
-
-  const pickFromLibrary = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Photo library access is required.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      await saveToLocalStorage(result.assets[0].uri);
-    }
-  };
-
-  if (showCamera) {
+  if (!permission) {
     return (
-      <View style={{ flex: 1 }}>
-        <CameraView style={{ flex: 1 }} facing={facing} ref={cameraRef} />
-        <TouchableOpacity onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}>
-          <Text>Flip Camera</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={takePicture}>
-          <Text>Take Picture</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowCamera(false)}>
-          <Text>Cancel</Text>
-        </TouchableOpacity>
+      <View style={styles.container}>
+        <Text style={styles.text}>Loading camera permissions...</Text>
       </View>
     );
   }
 
+  if (!permission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>We need your permission to use the camera</Text>
+        <Pressable style={styles.button} onPress={requestPermission}>
+          <Text style={styles.buttonText}>Grant Permission</Text>
+        </Pressable>
+        <Link href="/about" style={styles.exitLink}>Exit Camera</Link>
+      </View>
+    );
+  }
+
+  const handleCapture = async () => {
+    if (!cameraRef.current || isSaving) return;
+    try {
+      setIsSaving(true);
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.7 });
+      if (photo?.uri) {
+        await savePhoto(photo.uri);
+        Alert.alert('Saved', 'Photo saved to local storage.');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to capture or save photo.');
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <SafeAreaView>
-      <Text>Local Photo Storage</Text>
+    <View style={styles.container}>
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
+        <View style={styles.controls}>
+          <Pressable
+            style={styles.smallButton}
+            onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+          >
+            <Text style={styles.buttonText}>Flip</Text>
+          </Pressable>
 
-      <TouchableOpacity onPress={openCamera}>
-        <Text>Take Photo</Text>
-      </TouchableOpacity>
+          <Pressable style={styles.captureButton} onPress={handleCapture} disabled={isSaving}>
+            <View style={styles.captureInner} />
+          </Pressable>
 
-      <TouchableOpacity onPress={pickFromLibrary}>
-        <Text>Pick from Library</Text>
-      </TouchableOpacity>
+          <Link href="/gallery" style={[styles.smallButton, styles.buttonText]}>
+            Gallery
+          </Link>
+        </View>
+      </CameraView>
 
-      <Text>{photos.length} photo(s) saved locally</Text>
-
-      <FlatList
-        data={photos}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => (
-          <TouchableOpacity onLongPress={() => confirmDelete(item)}>
-            <Text>{item}</Text>
-            <Image source={{ uri: item }} style={{ width: 80, height: 80 }} />
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text>No photos yet. Take one or pick from your library.</Text>}
-      />
-    </SafeAreaView>
+      <Link href="/" style={[styles.exitLink, styles.buttonText]}>
+        Exit Camera
+      </Link>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#25292e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#fff',
+    marginBottom: 12,
+  },
+  camera: {
+    width: '100%',
+    flex: 1,
+  },
+  controls: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    padding: 24,
+    paddingBottom: 40,
+  },
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#ffd33d',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+  },
+  captureInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#25292e',
+  },
+  smallButton: {
+    backgroundColor: '#ffd33d',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'flex-end',
+  },
+  
+  button: {
+    marginTop: 16,
+    backgroundColor: '#ffd33d',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#25292e',
+    fontWeight: 'bold',
+  },
+  exitLink: {
+    color: '#fff',
+    fontSize: 16,
+    marginVertical: 16,
+    backgroundColor: '#ffd33d',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+});

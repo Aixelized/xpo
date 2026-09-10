@@ -60,7 +60,7 @@ export default function CalculatorScreen() {
           ))}
         </View>
       ))}
-      <Link href="/about" style={styles.button}>Exit Calculator</Link>
+      <Link href="/" style={styles.button}>Exit Calculator</Link>
     </View>
   );
 }
