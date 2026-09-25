@@ -5,11 +5,28 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#ffd33d',
-        headerStyle: { backgroundColor: '#25292e' },
+        tabBarActiveTintColor: '#F7BD53',
+        headerStyle: { backgroundColor: '#f9fdfd' },
         headerShadowVisible: false,
-        headerTintColor: '#fff',
-        tabBarStyle: { backgroundColor: '#25292e' },
+        headerTintColor: '#222020',
+
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          backgroundColor: '#ffffff',
+          borderRadius: 24,
+          height: 64,
+          paddingBottom: 8,
+          paddingTop: 8,
+          elevation: 5,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          borderTopWidth: 0,
+        },
       }}
     >
       <Tabs.Screen
@@ -24,11 +41,32 @@ export default function TabLayout() {
       <Tabs.Screen
         name="about"
         options={{
-          title: 'About',
+          title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24} />
+            <Ionicons
+              name={focused ? 'person-circle' : 'person-circle-outline'}
+              color={color}
+              size={24}
+            />
           ),
         }}
+      />
+
+      <Tabs.Screen
+        name="gallery"
+        options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }}
+      />
+      <Tabs.Screen
+        name="camera"
+        options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }}
+      />
+      <Tabs.Screen
+        name="calculator"
+        options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }}
+      />
+      <Tabs.Screen
+        name="photostorage"
+        options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }}
       />
     </Tabs>
   );
