@@ -68,6 +68,10 @@ export default function TabLayout() {
         name="photostorage"
         options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }}
       />
+    <Tabs.Screen
+        name="ComponentsProps"
+        options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }}
+      />
     </Tabs>
   );
 }

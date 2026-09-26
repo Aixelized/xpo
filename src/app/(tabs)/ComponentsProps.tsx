@@ -37,21 +37,24 @@ export default function WelcomeScreen() {
       setDisplayName(name);
     }
   };
+  const handleExit = () => {
+  setName('');
+  setDisplayName('');
+};
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Hello, {displayName || '_'}!</Text>
-
-      <View style={styles.card}>
-        <LabeledInput
-          label="Enter your Name:"
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter"
-        />
-        <ActionButton label="Enter" onPress={handleSubmit} />
-      </View>
-    </View>
+   <View style={styles.card}>
+  <LabeledInput
+    label="Enter your Name:"
+    value={name}
+    onChangeText={setName}
+    placeholder="Enter"
+  />
+  <View style={styles.buttonRow}>
+    <ActionButton label="Enter" onPress={handleSubmit} />
+    <ActionButton label="Exit" onPress={handleExit}  />
+  </View>
+</View>
   );
 }
 
@@ -73,6 +76,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f6e56',
     borderRadius: 20,
     padding: 20,
+    justifyContent: 'center',
   },
   label: {
     color: '#fff',
@@ -98,5 +102,10 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '700',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
   },
 });
