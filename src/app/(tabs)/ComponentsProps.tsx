@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, Pressable, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
 
 function LabeledInput({ label, value, onChangeText, placeholder }: {
   label: string;
@@ -29,6 +30,7 @@ function ActionButton({ label, onPress }: { label: string; onPress: () => void }
 }
 
 export default function WelcomeScreen() {
+  const router = useRouter();
   const [name, setName] = useState('');           // live input value
   const [displayName, setDisplayName] = useState(''); // what the header shows
 
@@ -38,23 +40,28 @@ export default function WelcomeScreen() {
     }
   };
   const handleExit = () => {
-  setName('');
-  setDisplayName('');
-};
+    setName('');
+    setDisplayName('');
+    router.replace('/'); // goes to (tabs)/index.tsx, your home screen
+  };
 
   return (
-   <View style={styles.card}>
-  <LabeledInput
-    label="Enter your Name:"
-    value={name}
-    onChangeText={setName}
-    placeholder="Enter"
-  />
-  <View style={styles.buttonRow}>
-    <ActionButton label="Enter" onPress={handleSubmit} />
-    <ActionButton label="Exit" onPress={handleExit}  />
-  </View>
-</View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Hello, {displayName || '_'}!</Text>
+
+      <View style={styles.card}>
+        <LabeledInput
+          label="Enter your Name:"
+          value={name}
+          onChangeText={setName}
+          placeholder="Enter"
+        />
+        <View style={styles.buttonRow}>
+          <ActionButton label="Enter" onPress={handleSubmit} />
+          <ActionButton label="Exit" onPress={handleExit} />
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -62,9 +69,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,
     paddingHorizontal: 24,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 32,
@@ -76,7 +83,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f6e56',
     borderRadius: 20,
     padding: 20,
-    justifyContent: 'center',
   },
   label: {
     color: '#fff',
@@ -105,7 +111,7 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     gap: 12,
   },
 });

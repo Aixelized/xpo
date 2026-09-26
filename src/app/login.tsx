@@ -38,16 +38,16 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#25292e', justifyContent: 'center', padding: 24 },
-  title: { color: '#fff', fontSize: 28, marginBottom: 24, fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: '#ffffff', justifyContent: 'center', padding: 24 },
+  title: { color: '#000', fontSize: 28, marginBottom: 24, fontWeight: 'bold' },
   input: {
-    backgroundColor: '#333',
-    color: '#fff',
+    backgroundColor: '#f0f0f0',
+    color: '#000',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
-  button: { backgroundColor: '#ffd33d', padding: 14, borderRadius: 8, alignItems: 'center' },
+  button: { backgroundColor: '#0f6e5c', padding: 14, borderRadius: 8, alignItems: 'center' },
   buttonText: { color: '#25292e', fontWeight: 'bold' },
   link: { color: '#fff', marginTop: 16, textAlign: 'center', textDecorationLine: 'underline' },
 });
